@@ -1,0 +1,12 @@
+[
+  "Temperature",
+  "Pressure",
+  "Precipitable Water",
+  "Aerosol Optical Depth",
+  "Dew Point",
+  "Ozone",
+  "Cloud Type",
+  "Cloud Fill Flag",
+  "Asymmetry",
+  "SSA"
+]
