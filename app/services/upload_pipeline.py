@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from fastapi import UploadFile, HTTPException
 from sklearn.preprocessing import StandardScaler
-import joblib
+import xgboost as xgb
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -27,12 +27,10 @@ LSTM_BATCH = 16
 PATIENCE = 3
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-MODEL_PATH = BASE_DIR / "xgb_model.pkl"
 FEATURES_PATH = BASE_DIR / "features.json"
 
-import xgboost as xgb
 XGB_MODEL = xgb.XGBRegressor()
-XGB_MODEL.load_model(BASE_DIR / "xgb_model_new.json")
+XGB_MODEL.load_model(str(BASE_DIR / "xgb_model_new.json"))
 
 with open(FEATURES_PATH, "r") as f:
     UNIVERSAL_FEATURES = json.load(f)
@@ -78,18 +76,15 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
                 detail=f"'{file.filename}' is not a CSV file. Please upload NSRDB CSV files only."
             )
 
-        # KEY FIX: read the raw bytes properly
         content = await file.read()
 
         try:
             df = pd.read_csv(BytesIO(content), skiprows=2, encoding="utf-8")
         except UnicodeDecodeError:
-            # Some NSRDB files use latin-1 encoding
             df = pd.read_csv(BytesIO(content), skiprows=2, encoding="latin-1")
 
         df.columns = [str(c).strip() for c in df.columns]
 
-        # Convert all columns to numeric where possible
         for c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="ignore")
 
@@ -172,7 +167,6 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
         X_seq, y_seq = create_sequences(data, LOOKBACK)
 
         if len(X_seq) < 5:
-            # Not enough sequences — use column mean as flat forecast
             future[feat] = float(np.mean(data))
             continue
 
@@ -182,7 +176,6 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
 
         model = build_lstm()
 
-        # Only use validation early stopping if we have enough val samples
         if len(Xval) >= 2:
             early = EarlyStopping(monitor="val_loss", patience=PATIENCE, restore_best_weights=True)
             model.fit(
@@ -201,7 +194,6 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
                 verbose=0
             )
 
-        # Recursive 36-month forecast
         preds    = []
         last_seq = data[-LOOKBACK:].reshape(1, LOOKBACK, 1)
 
