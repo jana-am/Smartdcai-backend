@@ -52,7 +52,7 @@ def predict_city(city_name: str):
     X = df[FEATURES].values
 
     # Predict normalized GHI
-    pred_norm = model.predict(X)
+    pred_norm = XGB_MODEL.predict(X)
 
     # Load normalization parameters
     with open(ghi_path, "r") as f:
