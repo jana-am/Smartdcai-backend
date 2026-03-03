@@ -252,3 +252,28 @@ async def predict_from_uploaded_csv(file: UploadFile):
             "lookback_months": LOOKBACK,
         },
     }
+
+from typing import List
+
+async def predict_from_uploaded_csvs(files: List[UploadFile]):
+
+    if len(files) == 0:
+        raise HTTPException(status_code=400, detail="No files uploaded")
+
+    all_dfs = []
+
+    for file in files:
+        if not file.filename.lower().endswith(".csv"):
+            raise HTTPException(status_code=400, detail=f"{file.filename} is not a CSV")
+
+        content = await file.read()
+        df = pd.read_csv(BytesIO(content), skiprows=2)
+        df.columns = [str(c).strip() for c in df.columns]
+
+        all_dfs.append(df)
+
+    # 🔥 Merge all years into one dataset
+    df = pd.concat(all_dfs, ignore_index=True)
+
+    # Now continue using your existing pipeline logic
+    return await process_combined_dataframe(df)
