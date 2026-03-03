@@ -71,18 +71,36 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
     # -------- 1) READ ALL FILES --------
     for file in files:
         if not file.filename.lower().endswith(".csv"):
-            raise HTTPException(status_code=400, detail=f"{file.filename} is not CSV")
+            raise HTTPException(
+                status_code=400,
+                detail=f"'{file.filename}' is not a CSV file. Please upload NSRDB CSV files only."
+            )
 
+        # KEY FIX: read the raw bytes properly
         content = await file.read()
-        df = pd.read_csv(BytesIO(content), skiprows=2)
+
+        try:
+            df = pd.read_csv(BytesIO(content), skiprows=2, encoding="utf-8")
+        except UnicodeDecodeError:
+            # Some NSRDB files use latin-1 encoding
+            df = pd.read_csv(BytesIO(content), skiprows=2, encoding="latin-1")
+
         df.columns = [str(c).strip() for c in df.columns]
+
+        # Convert all columns to numeric where possible
+        for c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="ignore")
+
         all_dfs.append(df)
 
     # -------- 2) MERGE YEARS --------
     df = pd.concat(all_dfs, ignore_index=True)
 
     if "GHI" not in df.columns:
-        raise HTTPException(status_code=400, detail="Column 'GHI' missing")
+        raise HTTPException(
+            status_code=400,
+            detail="Column 'GHI' is missing. Make sure you are uploading a standard NSRDB CSV file."
+        )
 
     # -------- 3) CLEANING --------
     df = df[df["GHI"] > 0].copy()
@@ -91,13 +109,21 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
     present_feats = [f for f in UNIVERSAL_FEATURES if f in df.columns]
 
     if len(present_feats) < 6:
-        raise HTTPException(status_code=400, detail="Not enough required features in dataset")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only {len(present_feats)} of the required features were found in your file. "
+                   f"Required: {UNIVERSAL_FEATURES}"
+        )
 
     keep_cols = ["Year", "Month", "GHI"] + present_feats
     df = df[keep_cols].dropna()
 
     if len(df) < 200:
-        raise HTTPException(status_code=400, detail="Not enough valid rows")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only {len(df)} valid rows found after cleaning. "
+                   "Please upload at least one full year of hourly NSRDB data."
+        )
 
     # -------- 4) MONTHLY AGGREGATION --------
     monthly = (
@@ -108,12 +134,16 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
     )
 
     if len(monthly) < 24:
-        raise HTTPException(status_code=400, detail="Not enough monthly rows for forecasting")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only {len(monthly)} monthly records found. "
+                   "Please upload at least 2 years of data for reliable forecasting."
+        )
 
     # -------- 5) NORMALIZATION --------
     split_idx = int(len(monthly) * 0.8)
     train = monthly.iloc[:split_idx].copy()
-    test = monthly.iloc[split_idx:].copy()
+    test  = monthly.iloc[split_idx:].copy()
 
     norm_cols = ["GHI"] + present_feats
 
@@ -121,45 +151,56 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
     scaler.fit(train[norm_cols])
 
     train[norm_cols] = scaler.transform(train[norm_cols])
-    test[norm_cols] = scaler.transform(test[norm_cols])
+    test[norm_cols]  = scaler.transform(test[norm_cols])
 
     monthly_norm = pd.concat([train, test], ignore_index=True)
 
     ghi_mean = float(scaler.mean_[0])
-    ghi_std = float(scaler.scale_[0])
+    ghi_std  = float(scaler.scale_[0])
 
-    # -------- 6) FORECAST FEATURES --------
+    # -------- 6) FORECAST FEATURES WITH LSTM --------
     future = pd.DataFrame({
-        "Year": [2025 + (i // 12) for i in range(FORECAST_MONTHS)],
-        "Month": [(i % 12) + 1 for i in range(FORECAST_MONTHS)]
+        "Year":  [2025 + (i // 12) for i in range(FORECAST_MONTHS)],
+        "Month": [(i % 12) + 1     for i in range(FORECAST_MONTHS)]
     })
 
     for feat in present_feats:
 
         data = monthly_norm[[feat]].values.astype(np.float32)
-
         X_seq, y_seq = create_sequences(data, LOOKBACK)
 
-        if len(X_seq) < 20:
-            raise HTTPException(status_code=400, detail=f"Not enough data for feature {feat}")
+        if len(X_seq) < 5:
+            # Not enough sequences — use column mean as flat forecast
+            future[feat] = float(np.mean(data))
+            continue
 
         split = int(len(X_seq) * 0.8)
-        Xtr, ytr = X_seq[:split], y_seq[:split]
+        Xtr, ytr   = X_seq[:split], y_seq[:split]
         Xval, yval = X_seq[split:], y_seq[split:]
 
         model = build_lstm()
-        early = EarlyStopping(monitor="val_loss", patience=PATIENCE, restore_best_weights=True)
 
-        model.fit(
-            Xtr, ytr,
-            validation_data=(Xval, yval),
-            epochs=LSTM_EPOCHS,
-            batch_size=LSTM_BATCH,
-            verbose=0,
-            callbacks=[early]
-        )
+        # Only use validation early stopping if we have enough val samples
+        if len(Xval) >= 2:
+            early = EarlyStopping(monitor="val_loss", patience=PATIENCE, restore_best_weights=True)
+            model.fit(
+                Xtr, ytr,
+                validation_data=(Xval, yval),
+                epochs=LSTM_EPOCHS,
+                batch_size=LSTM_BATCH,
+                verbose=0,
+                callbacks=[early]
+            )
+        else:
+            model.fit(
+                Xtr, ytr,
+                epochs=LSTM_EPOCHS,
+                batch_size=LSTM_BATCH,
+                verbose=0
+            )
 
-        preds = []
+        # Recursive 36-month forecast
+        preds    = []
         last_seq = data[-LOOKBACK:].reshape(1, LOOKBACK, 1)
 
         for _ in range(FORECAST_MONTHS):
@@ -176,22 +217,32 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
     missing_model_feats = [f for f in UNIVERSAL_FEATURES if f not in future.columns]
 
     if missing_model_feats:
-        raise HTTPException(status_code=400, detail=f"Missing features for model: {missing_model_feats}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Your dataset is missing these required columns: {missing_model_feats}"
+        )
 
-    X_future = future[UNIVERSAL_FEATURES].values
-    pred_norm = XGB_MODEL.predict(X_future)
+    X_future   = future[UNIVERSAL_FEATURES].values
+    pred_norm  = XGB_MODEL.predict(X_future)
+    pred_real  = pred_norm * ghi_std + ghi_mean
 
-    pred_real = pred_norm * ghi_std + ghi_mean
     future["Predicted_GHI_Wm2"] = pred_real
 
-    yearly_avg = future.groupby("Year")["Predicted_GHI_Wm2"].mean().round(2).to_dict()
-    avg_3y = round(float(np.mean(list(yearly_avg.values()))), 2)
+    yearly_avg = (
+        future.groupby("Year")["Predicted_GHI_Wm2"]
+        .mean()
+        .round(2)
+        .to_dict()
+    )
 
+    avg_3y   = round(float(np.mean(list(yearly_avg.values()))), 2)
     decision = "BUILD" if avg_3y >= BUILD_THRESHOLD else "DON'T BUILD"
 
     return {
-        "yearly_avg": yearly_avg,
+        "yearly_avg":     {int(k): v for k, v in yearly_avg.items()},
         "average_3_year": avg_3y,
-        "threshold": BUILD_THRESHOLD,
-        "decision": decision
+        "threshold":      BUILD_THRESHOLD,
+        "decision":       decision,
+        "files_uploaded": len(files),
+        "months_of_data": len(monthly)
     }
