@@ -38,8 +38,9 @@ def predict(city_name: str):
         raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except Exception as e:
+        # Show the real error so we can debug
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.post("/predict/upload")
@@ -51,10 +52,16 @@ async def predict_upload(
     Each file = one year of hourly solar data.
     More years = better accuracy.
     """
-    return await predict_from_uploaded_csvs(files)
+    try:
+        return await predict_from_uploaded_csvs(files)
+    except HTTPException:
+        raise  # re-raise our own clean errors
+    except Exception as e:
+        # Show the real error message instead of hiding it
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
 
-# ── Fix Swagger UI to show a real file picker for the upload endpoint ────────
+# ── Fix Swagger UI to show a real file picker ────────────────────────────────
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -66,8 +73,6 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # Force the /predict/upload endpoint to use array of binary files
-    # so Swagger renders an actual file picker instead of string inputs
     upload_path = "/predict/upload"
     if upload_path in schema.get("paths", {}):
         post = schema["paths"][upload_path].get("post", {})
@@ -80,7 +85,7 @@ def custom_openapi():
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "format": "binary"   # This is what tells Swagger: file picker!
+                            "format": "binary"
                         }
                     }
                 },
