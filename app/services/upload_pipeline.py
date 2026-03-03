@@ -12,7 +12,6 @@ import xgboost as xgb
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
-from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
 
 
@@ -24,7 +23,6 @@ LOOKBACK = 12
 FORECAST_MONTHS = 36
 LSTM_EPOCHS = 8
 LSTM_BATCH = 16
-PATIENCE = 3
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 FEATURES_PATH = BASE_DIR / "features.json"
@@ -170,29 +168,15 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
             future[feat] = float(np.mean(data))
             continue
 
-        split = int(len(X_seq) * 0.8)
-        Xtr, ytr   = X_seq[:split], y_seq[:split]
-        Xval, yval = X_seq[split:], y_seq[split:]
-
+        # Train without any EarlyStopping — fixed epochs only, no validation needed
         model = build_lstm()
-
-        if len(Xval) >= 2:
-            early = EarlyStopping(monitor="val_loss", patience=PATIENCE, restore_best_weights=True)
-            model.fit(
-                Xtr, ytr,
-                validation_data=(Xval, yval),
-                epochs=LSTM_EPOCHS,
-                batch_size=LSTM_BATCH,
-                verbose=0,
-                callbacks=[early]
-            )
-        else:
-            model.fit(
-                Xtr, ytr,
-                epochs=LSTM_EPOCHS,
-                batch_size=LSTM_BATCH,
-                verbose=0
-            )
+        model.fit(
+            X_seq, y_seq,
+            epochs=LSTM_EPOCHS,
+            batch_size=LSTM_BATCH,
+            verbose=0
+            # No callbacks, no validation_data — eliminates the crash entirely
+        )
 
         preds    = []
         last_seq = data[-LOOKBACK:].reshape(1, LOOKBACK, 1)
