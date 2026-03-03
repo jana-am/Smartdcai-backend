@@ -30,7 +30,9 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 MODEL_PATH = BASE_DIR / "xgb_model.pkl"
 FEATURES_PATH = BASE_DIR / "features.json"
 
-XGB_MODEL = joblib.load(MODEL_PATH)
+import xgboost as xgb
+XGB_MODEL = xgb.XGBRegressor()
+XGB_MODEL.load_model(BASE_DIR / "xgb_model_new.json")
 
 with open(FEATURES_PATH, "r") as f:
     UNIVERSAL_FEATURES = json.load(f)
