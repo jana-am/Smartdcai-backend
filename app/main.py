@@ -32,7 +32,11 @@ def predict(city_name: str):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-# ✅ MULTI-FILE UPLOAD ENDPOINT
+from fastapi import UploadFile, File
+from typing import List
+
 @app.post("/predict/upload")
-async def predict_upload(files: List[UploadFile] = File(...)):
+async def predict_upload(
+    files: List[UploadFile] = File(...)
+):
     return await predict_from_uploaded_csvs(files)
