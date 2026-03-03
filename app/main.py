@@ -39,3 +39,11 @@ async def predict_upload(file: UploadFile = File(...)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+from typing import List
+from fastapi import UploadFile, File
+from app.services.upload_pipeline import predict_from_uploaded_csvs
+
+@app.post("/predict/upload")
+async def predict_upload(files: List[UploadFile] = File(...)):
+    return await predict_from_uploaded_csvs(files)
