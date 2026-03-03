@@ -1,4 +1,5 @@
 import json
+import traceback
 from pathlib import Path
 from io import BytesIO
 from typing import List
@@ -60,167 +61,147 @@ def build_lstm():
 # MAIN FUNCTION
 # =========================
 async def predict_from_uploaded_csvs(files: List[UploadFile]):
+    try:
+        if len(files) == 0:
+            raise HTTPException(status_code=400, detail="No files uploaded")
 
-    if len(files) == 0:
-        raise HTTPException(status_code=400, detail="No files uploaded")
+        all_dfs = []
 
-    all_dfs = []
+        # -------- 1) READ ALL FILES --------
+        print(f"[1] Reading {len(files)} files...")
+        for file in files:
+            if not file.filename.lower().endswith(".csv"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"'{file.filename}' is not a CSV file."
+                )
+            content = await file.read()
+            try:
+                df = pd.read_csv(BytesIO(content), skiprows=2, encoding="utf-8")
+            except UnicodeDecodeError:
+                df = pd.read_csv(BytesIO(content), skiprows=2, encoding="latin-1")
+            df.columns = [str(c).strip() for c in df.columns]
+            for c in df.columns:
+                df[c] = pd.to_numeric(df[c], errors="ignore")
+            all_dfs.append(df)
+        print(f"[1] Done. Files read: {len(all_dfs)}")
 
-    # -------- 1) READ ALL FILES --------
-    for file in files:
-        if not file.filename.lower().endswith(".csv"):
-            raise HTTPException(
-                status_code=400,
-                detail=f"'{file.filename}' is not a CSV file. Please upload NSRDB CSV files only."
-            )
+        # -------- 2) MERGE --------
+        print("[2] Merging files...")
+        df = pd.concat(all_dfs, ignore_index=True)
+        print(f"[2] Merged shape: {df.shape}")
 
-        content = await file.read()
+        if "GHI" not in df.columns:
+            raise HTTPException(status_code=400, detail="Column 'GHI' is missing.")
 
-        try:
-            df = pd.read_csv(BytesIO(content), skiprows=2, encoding="utf-8")
-        except UnicodeDecodeError:
-            df = pd.read_csv(BytesIO(content), skiprows=2, encoding="latin-1")
+        # -------- 3) CLEANING --------
+        print("[3] Cleaning...")
+        df = df[df["GHI"] > 0].copy()
+        df.drop(columns=["Wind Speed", "Wind Direction"], errors="ignore", inplace=True)
+        present_feats = [f for f in UNIVERSAL_FEATURES if f in df.columns]
+        print(f"[3] Present features: {present_feats}")
 
-        df.columns = [str(c).strip() for c in df.columns]
+        if len(present_feats) < 6:
+            raise HTTPException(status_code=400, detail=f"Only {len(present_feats)} features found.")
 
-        for c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="ignore")
+        keep_cols = ["Year", "Month", "GHI"] + present_feats
+        df = df[keep_cols].dropna()
+        print(f"[3] After cleaning: {len(df)} rows")
 
-        all_dfs.append(df)
+        if len(df) < 200:
+            raise HTTPException(status_code=400, detail=f"Only {len(df)} valid rows.")
 
-    # -------- 2) MERGE YEARS --------
-    df = pd.concat(all_dfs, ignore_index=True)
-
-    if "GHI" not in df.columns:
-        raise HTTPException(
-            status_code=400,
-            detail="Column 'GHI' is missing. Make sure you are uploading a standard NSRDB CSV file."
+        # -------- 4) MONTHLY AGGREGATION --------
+        print("[4] Monthly aggregation...")
+        monthly = (
+            df.groupby(["Year", "Month"], as_index=False)
+            .mean(numeric_only=True)
+            .sort_values(["Year", "Month"])
+            .reset_index(drop=True)
         )
+        print(f"[4] Monthly rows: {len(monthly)}")
 
-    # -------- 3) CLEANING --------
-    df = df[df["GHI"] > 0].copy()
-    df.drop(columns=["Wind Speed", "Wind Direction"], errors="ignore", inplace=True)
+        if len(monthly) < 24:
+            raise HTTPException(status_code=400, detail=f"Only {len(monthly)} monthly records.")
 
-    present_feats = [f for f in UNIVERSAL_FEATURES if f in df.columns]
+        # -------- 5) NORMALIZATION --------
+        print("[5] Normalizing...")
+        split_idx = int(len(monthly) * 0.8)
+        train = monthly.iloc[:split_idx].copy()
+        test  = monthly.iloc[split_idx:].copy()
+        norm_cols = ["GHI"] + present_feats
+        scaler = StandardScaler()
+        scaler.fit(train[norm_cols])
+        train[norm_cols] = scaler.transform(train[norm_cols])
+        test[norm_cols]  = scaler.transform(test[norm_cols])
+        monthly_norm = pd.concat([train, test], ignore_index=True)
+        ghi_mean = float(scaler.mean_[0])
+        ghi_std  = float(scaler.scale_[0])
+        print(f"[5] GHI mean={ghi_mean:.2f}, std={ghi_std:.2f}")
 
-    if len(present_feats) < 6:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only {len(present_feats)} of the required features were found in your file. "
-                   f"Required: {UNIVERSAL_FEATURES}"
-        )
+        # -------- 6) LSTM FORECAST --------
+        print("[6] LSTM forecasting...")
+        future = pd.DataFrame({
+            "Year":  [2025 + (i // 12) for i in range(FORECAST_MONTHS)],
+            "Month": [(i % 12) + 1     for i in range(FORECAST_MONTHS)]
+        })
 
-    keep_cols = ["Year", "Month", "GHI"] + present_feats
-    df = df[keep_cols].dropna()
+        for feat in present_feats:
+            print(f"[6] Forecasting feature: {feat}")
+            data = monthly_norm[[feat]].values.astype(np.float32)
+            X_seq, y_seq = create_sequences(data, LOOKBACK)
 
-    if len(df) < 200:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only {len(df)} valid rows found after cleaning. "
-                   "Please upload at least one full year of hourly NSRDB data."
-        )
+            if len(X_seq) < 5:
+                future[feat] = float(np.mean(data))
+                print(f"[6] {feat}: not enough sequences, using mean")
+                continue
 
-    # -------- 4) MONTHLY AGGREGATION --------
-    monthly = (
-        df.groupby(["Year", "Month"], as_index=False)
-        .mean(numeric_only=True)
-        .sort_values(["Year", "Month"])
-        .reset_index(drop=True)
-    )
+            model = build_lstm()
+            model.fit(X_seq, y_seq, epochs=LSTM_EPOCHS, batch_size=LSTM_BATCH, verbose=0)
 
-    if len(monthly) < 24:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only {len(monthly)} monthly records found. "
-                   "Please upload at least 2 years of data for reliable forecasting."
-        )
+            preds    = []
+            last_seq = data[-LOOKBACK:].reshape(1, LOOKBACK, 1)
+            for _ in range(FORECAST_MONTHS):
+                nxt = model.predict(last_seq, verbose=0)[0, 0]
+                preds.append(nxt)
+                last_seq = np.append(last_seq[:, 1:, :], [[[nxt]]], axis=1)
 
-    # -------- 5) NORMALIZATION --------
-    split_idx = int(len(monthly) * 0.8)
-    train = monthly.iloc[:split_idx].copy()
-    test  = monthly.iloc[split_idx:].copy()
+            future[feat] = preds
+            del model
+            tf.keras.backend.clear_session()
+            print(f"[6] {feat}: done")
 
-    norm_cols = ["GHI"] + present_feats
+        # -------- 7) XGBOOST --------
+        print("[7] XGBoost prediction...")
+        missing_model_feats = [f for f in UNIVERSAL_FEATURES if f not in future.columns]
+        if missing_model_feats:
+            raise HTTPException(status_code=400, detail=f"Missing features: {missing_model_feats}")
 
-    scaler = StandardScaler()
-    scaler.fit(train[norm_cols])
+        X_future  = future[UNIVERSAL_FEATURES].values
+        pred_norm = XGB_MODEL.predict(X_future)
+        pred_real = pred_norm * ghi_std + ghi_mean
+        future["Predicted_GHI_Wm2"] = pred_real
 
-    train[norm_cols] = scaler.transform(train[norm_cols])
-    test[norm_cols]  = scaler.transform(test[norm_cols])
+        yearly_avg = future.groupby("Year")["Predicted_GHI_Wm2"].mean().round(2).to_dict()
+        avg_3y     = round(float(np.mean(list(yearly_avg.values()))), 2)
+        decision   = "BUILD" if avg_3y >= BUILD_THRESHOLD else "DON'T BUILD"
 
-    monthly_norm = pd.concat([train, test], ignore_index=True)
+        print(f"[7] Decision: {decision}, avg_3y={avg_3y}")
 
-    ghi_mean = float(scaler.mean_[0])
-    ghi_std  = float(scaler.scale_[0])
+        return {
+            "yearly_avg":     {int(k): v for k, v in yearly_avg.items()},
+            "average_3_year": avg_3y,
+            "threshold":      BUILD_THRESHOLD,
+            "decision":       decision,
+            "files_uploaded": len(files),
+            "months_of_data": len(monthly)
+        }
 
-    # -------- 6) FORECAST FEATURES WITH LSTM --------
-    future = pd.DataFrame({
-        "Year":  [2025 + (i // 12) for i in range(FORECAST_MONTHS)],
-        "Month": [(i % 12) + 1     for i in range(FORECAST_MONTHS)]
-    })
-
-    for feat in present_feats:
-
-        data = monthly_norm[[feat]].values.astype(np.float32)
-        X_seq, y_seq = create_sequences(data, LOOKBACK)
-
-        if len(X_seq) < 5:
-            future[feat] = float(np.mean(data))
-            continue
-
-        # Train without any EarlyStopping — fixed epochs only, no validation needed
-        model = build_lstm()
-        model.fit(
-            X_seq, y_seq,
-            epochs=LSTM_EPOCHS,
-            batch_size=LSTM_BATCH,
-            verbose=0
-            # No callbacks, no validation_data — eliminates the crash entirely
-        )
-
-        preds    = []
-        last_seq = data[-LOOKBACK:].reshape(1, LOOKBACK, 1)
-
-        for _ in range(FORECAST_MONTHS):
-            nxt = model.predict(last_seq, verbose=0)[0, 0]
-            preds.append(nxt)
-            last_seq = np.append(last_seq[:, 1:, :], [[[nxt]]], axis=1)
-
-        future[feat] = preds
-
-        del model
-        tf.keras.backend.clear_session()
-
-    # -------- 7) XGBOOST PREDICTION --------
-    missing_model_feats = [f for f in UNIVERSAL_FEATURES if f not in future.columns]
-
-    if missing_model_feats:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Your dataset is missing these required columns: {missing_model_feats}"
-        )
-
-    X_future   = future[UNIVERSAL_FEATURES].values
-    pred_norm  = XGB_MODEL.predict(X_future)
-    pred_real  = pred_norm * ghi_std + ghi_mean
-
-    future["Predicted_GHI_Wm2"] = pred_real
-
-    yearly_avg = (
-        future.groupby("Year")["Predicted_GHI_Wm2"]
-        .mean()
-        .round(2)
-        .to_dict()
-    )
-
-    avg_3y   = round(float(np.mean(list(yearly_avg.values()))), 2)
-    decision = "BUILD" if avg_3y >= BUILD_THRESHOLD else "DON'T BUILD"
-
-    return {
-        "yearly_avg":     {int(k): v for k, v in yearly_avg.items()},
-        "average_3_year": avg_3y,
-        "threshold":      BUILD_THRESHOLD,
-        "decision":       decision,
-        "files_uploaded": len(files),
-        "months_of_data": len(monthly)
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Print full traceback to Render logs
+        print("=== FULL ERROR TRACEBACK ===")
+        traceback.print_exc()
+        print("=== END TRACEBACK ===")
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
