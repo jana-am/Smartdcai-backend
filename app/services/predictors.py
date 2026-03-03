@@ -3,19 +3,20 @@ import numpy as np
 import joblib
 import json
 from pathlib import Path
+import xgboost as xgb
 
 BUILD_THRESHOLD = 409
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-MODEL_PATH = BASE_DIR / "xgb_model.pkl"
 FEATURES_PATH = BASE_DIR / "features.json"
 DATASETS_DIR = BASE_DIR / "datasets"
 GHI_PARAMS_DIR = BASE_DIR / "ghi_params"
 CITIES_PATH = BASE_DIR / "cities.csv"
 
 # Load model once at startup
-model = joblib.load(MODEL_PATH)
+XGB_MODEL = xgb.XGBRegressor()
+XGB_MODEL.load_model(BASE_DIR / "xgb_model_new.json")
 
 # Load feature list
 with open(FEATURES_PATH, "r") as f:
