@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-
 from app.services.predictors import predict_city, get_supported_cities
 from app.services.upload_pipeline import predict_from_uploaded_csvs
 
@@ -8,6 +8,14 @@ app = FastAPI(
     title="SmartDCAI API",
     description="AI-Driven Smart Data Center Decision System",
     version="1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
@@ -31,10 +39,14 @@ def predict(city_name: str):
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-from fastapi import UploadFile, File
 
 @app.post("/predict/upload")
 async def predict_upload(
-    files: list[UploadFile] = File(...)
+    files: List[UploadFile] = File(...)
 ):
+    """
+    Upload one or more raw NSRDB CSV files to get a GHI prediction and build decision.
+    Each file should be a yearly NSRDB dataset (with the standard 2-row metadata header).
+    Uploading multiple years gives better accuracy.
+    """
     return await predict_from_uploaded_csvs(files)
