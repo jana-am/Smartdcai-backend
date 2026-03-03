@@ -82,7 +82,7 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
                 df = pd.read_csv(BytesIO(content), skiprows=2, encoding="latin-1")
             df.columns = [str(c).strip() for c in df.columns]
             for c in df.columns:
-                df[c] = pd.to_numeric(df[c], errors="ignore")
+                df[c] = pd.to_numeric(df[c], errors="coerce")
             all_dfs.append(df)
         print(f"[1] Done. Files read: {len(all_dfs)}")
 
