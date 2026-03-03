@@ -5,5 +5,5 @@ numpy
 joblib
 scikit-learn
 xgboost
-tensorflow
+statsmodels
 python-multipart
