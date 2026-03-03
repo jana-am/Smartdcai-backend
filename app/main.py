@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from app.services.predictors import predict_city, get_supported_cities
+from app.services.upload_pipeline import predict_from_uploaded_csv
 
 app = FastAPI(
     title="SmartDCAI API",
@@ -25,12 +26,16 @@ def predict(city_name: str):
         raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-from fastapi import UploadFile, File
-from app.services.upload_pipeline import predict_from_uploaded_csv
 
+# ✅ NEW ENDPOINT
 @app.post("/predict/upload")
 async def predict_upload(file: UploadFile = File(...)):
-    return await predict_from_uploaded_csv(file)
+    try:
+        return await predict_from_uploaded_csv(file)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
