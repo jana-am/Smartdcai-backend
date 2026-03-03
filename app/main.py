@@ -27,3 +27,10 @@ def predict(city_name: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+
+from fastapi import UploadFile, File
+from app.services.upload_pipeline import predict_from_uploaded_csv
+
+@app.post("/predict/upload")
+async def predict_upload(file: UploadFile = File(...)):
+    return await predict_from_uploaded_csv(file)
