@@ -18,7 +18,6 @@ warnings.filterwarnings("ignore")
 # CONFIG
 # =========================
 BUILD_THRESHOLD = 409
-LOOKBACK = 12
 FORECAST_MONTHS = 36
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -33,13 +32,8 @@ with open(FEATURES_PATH, "r") as f:
 
 # =========================
 # SARIMA FORECAST
-# replaces LSTM — captures monthly seasonality, uses ~50MB vs ~400MB
 # =========================
 def sarima_forecast(series: np.ndarray, steps: int = 36) -> np.ndarray:
-    """
-    Fit a SARIMA(1,0,1)(1,0,1,12) on the series and forecast `steps` months ahead.
-    Falls back to seasonal mean repeat if SARIMA fails.
-    """
     try:
         model = SARIMAX(
             series,
@@ -52,14 +46,13 @@ def sarima_forecast(series: np.ndarray, steps: int = 36) -> np.ndarray:
         forecast = fit.forecast(steps=steps)
         return np.array(forecast, dtype=np.float32)
     except Exception:
-        # Fallback: repeat the last 12 months (one seasonal cycle) across forecast period
         cycle = series[-12:] if len(series) >= 12 else series
         repeated = np.tile(cycle, steps // len(cycle) + 1)[:steps]
         return repeated.astype(np.float32)
 
 
 # =========================
-# HELPERS
+# MAIN FUNCTION
 # =========================
 async def predict_from_uploaded_csvs(files: List[UploadFile]):
     try:
@@ -105,13 +98,15 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
         df.drop(columns=["Wind Speed", "Wind Direction"], errors="ignore", inplace=True)
 
         present_feats = [f for f in UNIVERSAL_FEATURES if f in df.columns]
+        missing_feats = [f for f in UNIVERSAL_FEATURES if f not in df.columns]
         print(f"[3] Present features: {present_feats}")
+        print(f"[3] Missing features (will use 0): {missing_feats}")
 
         if len(present_feats) < 6:
             raise HTTPException(
                 status_code=400,
-                detail=f"Only {len(present_feats)} required features found in your file. "
-                       f"Required: {UNIVERSAL_FEATURES}"
+                detail=f"Only {len(present_feats)} required features found. "
+                       f"Required at least 6 of: {UNIVERSAL_FEATURES}"
             )
 
         keep_cols = ["Year", "Month", "GHI"] + present_feats
@@ -166,22 +161,21 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
             "Month": [(i % 12) + 1     for i in range(FORECAST_MONTHS)]
         })
 
+        # Forecast features that are present
         for feat in present_feats:
             print(f"[6] Forecasting: {feat}")
             series = monthly_norm[feat].values.astype(np.float32)
             future[feat] = sarima_forecast(series, steps=FORECAST_MONTHS)
 
+        # Fill missing features with 0 (neutral normalized value)
+        for feat in missing_feats:
+            print(f"[6] Filling missing feature with 0: {feat}")
+            future[feat] = 0.0
+
         print("[6] SARIMA forecasting complete")
 
         # -------- 7) XGBOOST PREDICTION --------
         print("[7] XGBoost prediction...")
-        missing_model_feats = [f for f in UNIVERSAL_FEATURES if f not in future.columns]
-        if missing_model_feats:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Your dataset is missing these required columns: {missing_model_feats}"
-            )
-
         X_future  = future[UNIVERSAL_FEATURES].values
         pred_norm = XGB_MODEL.predict(X_future)
         pred_real = pred_norm * ghi_std + ghi_mean
@@ -205,7 +199,8 @@ async def predict_from_uploaded_csvs(files: List[UploadFile]):
             "threshold":      BUILD_THRESHOLD,
             "decision":       decision,
             "files_uploaded": len(files),
-            "months_of_data": len(monthly)
+            "months_of_data": len(monthly),
+            "missing_features": missing_feats  # inform the frontend which were missing
         }
 
     except HTTPException:
