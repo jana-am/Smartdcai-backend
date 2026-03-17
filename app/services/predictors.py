@@ -34,8 +34,15 @@ def get_supported_cities():
 def predict_city(city_name: str):
     city_name = city_name.strip()
 
-    if city_name not in SUPPORTED_CITIES:
+    # Case-insensitive matching
+    matched = next(
+        (c for c in SUPPORTED_CITIES if c.lower() == city_name.lower()),
+        None
+    )
+    if not matched:
         raise ValueError(f"City '{city_name}' is not supported")
+
+    city_name = matched  # use exact name from cities.csv
 
     dataset_path = DATASETS_DIR / f"{city_name}_forecast_2025_2027.csv"
     ghi_path = GHI_PARAMS_DIR / f"{city_name}_ghi_params.json"
@@ -47,25 +54,18 @@ def predict_city(city_name: str):
         raise FileNotFoundError(f"GHI params not found for {city_name}")
 
     df = pd.read_csv(dataset_path)
-
-    # Ensure correct feature order
     X = df[FEATURES].values
-
-    # Predict normalized GHI
     pred_norm = XGB_MODEL.predict(X)
 
-    # Load normalization parameters
     with open(ghi_path, "r") as f:
         ghi_params = json.load(f)
 
     mean = ghi_params["mean"]
     std = ghi_params["scale"]
 
-    # Denormalize
     pred_real = pred_norm * std + mean
     df["Predicted_GHI_Wm2"] = pred_real
 
-    # Yearly averages
     yearly_avg = (
         df.groupby("Year")["Predicted_GHI_Wm2"]
         .mean()
@@ -74,7 +74,6 @@ def predict_city(city_name: str):
     )
 
     avg_3y = round(np.mean(list(yearly_avg.values())), 2)
-
     decision = "BUILD" if avg_3y >= BUILD_THRESHOLD else "DON'T BUILD"
 
     return {
