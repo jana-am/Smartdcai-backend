@@ -7,3 +7,7 @@ scikit-learn
 xgboost
 statsmodels
 python-multipart
+psycopg2-binary
+sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
