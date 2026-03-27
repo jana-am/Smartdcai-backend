@@ -32,6 +32,7 @@ def startup():
 # Request body model for login and signup
 class AuthRequest(BaseModel):
     email: str
+    username: str
     password: str
 
 @app.post("/auth/signup")
