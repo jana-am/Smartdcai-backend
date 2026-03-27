@@ -44,13 +44,24 @@ def signup(data: AuthRequest, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Account created successfully"}
 
+from fastapi.security import OAuth2PasswordRequestForm
+
 @app.post("/auth/login")
-def login(data: AuthRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email).first()
-    if not user or not verify_password(data.password, user.hashed_password):
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
     token = create_token(user.email)
-    return {"access_token": token, "token_type": "bearer"}
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
 
 @app.get("/")
 def home():
