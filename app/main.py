@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List
@@ -24,12 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create database tables on startup
 @app.on_event("startup")
 def startup():
     create_tables()
 
-# Request body model for login and signup
+# JSON body model — matches what the frontend sends
 class AuthRequest(BaseModel):
     email: str
     password: str
@@ -44,24 +42,13 @@ def signup(data: AuthRequest, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Account created successfully"}
 
-from fastapi.security import OAuth2PasswordRequestForm
-
 @app.post("/auth/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.email == form_data.username).first()
-
-    if not user or not verify_password(form_data.password, user.hashed_password):
+def login(data: AuthRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
     token = create_token(user.email)
-
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    return {"access_token": token, "token_type": "bearer"}
 
 @app.get("/")
 def home():
@@ -99,7 +86,6 @@ async def predict_upload(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
-# Fix Swagger UI to show a real file picker
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -119,13 +105,12 @@ def custom_openapi():
                 "properties": {
                     "files": {
                         "type": "array",
-                        "items": {
-                            "type": "string",
-                            "format": "binary"
-                        }
+                        "items": {"type": "string", "format": "binary"}
                     }
                 },
                 "required": ["files"]
             }
     app.openapi_schema = schema
     return app.openapi_schema
+
+app.openapi = custom_openapi
