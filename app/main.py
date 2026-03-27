@@ -39,36 +39,18 @@ def signup(data: AuthRequest, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    user = User(
-    email=data.email,
-    username=data.username,
-    hashed_password=hash_password(data.password)
-)
+    user = User(email=data.email, hashed_password=hash_password(data.password))
     db.add(user)
     db.commit()
     return {"message": "Account created successfully"}
 
-from fastapi.security import OAuth2PasswordRequestForm
-
 @app.post("/auth/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(
-        (User.email == form_data.username) |
-        (User.username == form_data.username)
-    ).first()
-
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
+def login(data: AuthRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_token(user.email)
-
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    return {"access_token": token, "token_type": "bearer"}
 
 @app.get("/")
 def home():
@@ -136,5 +118,3 @@ def custom_openapi():
             }
     app.openapi_schema = schema
     return app.openapi_schema
-
-app.openapi = custom_openapi
