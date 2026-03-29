@@ -1,0 +1,185 @@
+/* CSS Document */
+
+/* CSS Document */
+
+/* --- 1. GENERAL STYLES --- */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #0f2e21; /* Dark forest green */
+    color: #FAF9F6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 2. NAVBAR --- */
+.nav {
+    padding: 18px 45px;
+    background: transparent;
+    /* Make nav stay on top of the hero image */
+    position: relative;
+    z-index: 10;
+}
+.nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* This centers the .navlinks block */
+    position: relative;
+}
+.brand {
+    position: absolute;
+    left: 45px;
+    font-size: 20px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #FAF9F6;
+}
+.navlinks a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: #d8f5e0;
+    font-weight: 500;
+}
+.navlinks a.active,
+.navlinks a:hover {
+    background: #3ea174;
+    padding: 6px 14px;
+    border-radius: 14px;
+    color: #FAF9F6;
+}
+
+/* --- 3. ABOUT PAGE HERO (New!) --- */
+.about-hero-section {
+    position: relative; /* Container for overlay and content */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 20px;
+    min-height: 300px;
+    background-image: url('images/homepic.jpg'); /* USE YOUR IMAGE HERE */
+    background-size: cover;
+    background-position: center;
+    /* Move nav down (negative margin) */
+    margin-top: -80px; /* Pulls up behind the transparent nav */
+}
+.about-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+    z-index: 1;
+}
+.about-hero-content {
+    position: relative;
+    z-index: 2; /* On top of overlay */
+    max-width: 700px;
+}
+.about-hero-content h1 {
+    font-size: 3.5rem;
+    color: white;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.about-hero-content p {
+    font-size: 1.3rem;
+    color: #eafaea;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* --- 4. GLOBAL STYLES (Copied) --- */
+.container {
+    max-width: 1100px;
+    margin: 0 auto; /* Centers the content */
+    padding: 40px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    margin: 0 0 10px 0;
+}
+.h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 10px 0;
+}
+.muted {
+    color: #d8f5e0;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-top: 0;
+}
+
+/* --- 5. ABOUT PAGE CONTENT (New!) --- */
+
+/* Style the main beige cards */
+.about-page-content .card {
+    background: #FAF9F6; /* Light beige/oatmeal */
+    color: #0f2e21; /* Dark green text */
+    padding: 30px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+}
+
+/* Make all text inside beige cards dark */
+.about-page-content .card .h2,
+.about-page-content .card .h3,
+.about-page-content .card .muted,
+.about-page-content .card p {
+    color: #0f2e21;
+}
+
+/* --- Team Section --- */
+.team-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns */
+    gap: 30px;
+    margin-top: 20px;
+}
+.team-member {
+    background-color: #F5F5DC; /* Darker beige */
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #e0e0d1;
+}
+.team-member img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%; /* Makes image round */
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 3px solid #e0e0d1;
+}
+.team-member h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0a1f18; /* Darkest green */
+    margin-bottom: 5px;
+}
+.team-member .muted {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+/* Title (e.g., CEO) */
+.team-member p:nth-of-type(1) {
+    font-weight: 600;
+    color: #3ea174; /* Accent green */
+    margin-bottom: 10px;
+}
+
+/* --- 6. FOOTER --- */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: auto; /* Pushes footer to the bottom */
+    color: #a0a0a0;
+}

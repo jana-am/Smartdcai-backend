@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Login - SmartDCAI</title>
+  <link rel="stylesheet" href="indexstyle.css">
+  <style>
+    .auth-card {
+      max-width: 400px; margin: 80px auto; padding: 40px;
+      background: #1a4a3a; border: 1px solid #3ea174; border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
+    }
+    input {
+      width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px;
+      border: 1px solid #3ea174; background: #0f2e21; color: white;
+    }
+  </style>
+</head>
+<body>
+
+   <!-- NAVBAR -->
+   <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Siting</a>
+      <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="cities.html">Cities</a>
+        <a href="guide.html">Data Guide</a>
+        <a href="result.html">Result</a>
+        <a href="about.html">About</a>
+        <a class="active" href="login.html">Login</a>
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="auth-card">
+    <h2 style="color: white;">Welcome Back</h2>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-pass" placeholder="Password">
+    <button class="btn primary" onclick="handleLogin()" id="login-btn">Login</button>
+    <p class="muted" style="margin-top: 20px;">New here? <a href="signup.html" style="color: #3ea174;">Create account</a></p>
+  </div>
+
+  <script>
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-pass').value;
+      const btn = document.getElementById('login-btn');
+      
+      btn.innerText = "Authenticating...";
+      
+      try {
+        const response = await fetch("https://dcai-backend.onrender.com/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        if(response.ok) {
+          const data = await response.json();
+          // SAVE THE TOKEN HERE
+          localStorage.setItem('access_token', data.access_token);
+          window.location.href = "cities.html";
+        } else {
+          alert("Invalid email or password");
+        }
+      } catch(e) {
+        alert("Server is sleeping. Give it a minute!");
+      } finally {
+        btn.innerText = "Login";
+      }
+    }
+  </script>
+</body>
+</html>

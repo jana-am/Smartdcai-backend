@@ -1,0 +1,469 @@
+/* CSS Document */
+
+/* --- 1. GENERAL STYLES --- */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #0f2e21; /* Dark forest green */
+    color: #FAF9F6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 2. NAVBAR --- */
+.nav {
+    padding: 18px 45px;
+    background: transparent;
+}
+.nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* This centers the .navlinks block */
+    position: relative;
+}
+.brand {
+    position: absolute;
+    left: 45px;
+    font-size: 20px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #FAF9F6;
+}
+.navlinks a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: #d8f5e0;
+    font-weight: 500;
+}
+.navlinks a.active,
+.navlinks a:hover {
+    background: #3ea174;
+    padding: 6px 14px;
+    border-radius: 14px;
+    color: #FAF9F6;
+}
+
+/* --- 3. HOME PAGE HERO --- */
+.hero-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 60px;
+    min-height: 90vh; /* Taller section */
+    gap: 40px;
+}
+.hero-content {
+    flex: 1;
+    max-width: 35%; /* Smaller text area */
+    text-align: left;
+}
+.hero-content h1 {
+    font-size: 3rem;
+    color: #FAF9F6;
+}
+.hero-content p {
+    font-size: 1.1rem;
+    color: #d8f5e0;
+}
+.hero-image {
+    flex: 1.5;
+    max-width: 60%; /* Wider image area */
+    text-align: right;
+}
+.hero-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 0 18px rgba(0,0,0,0.4);
+}
+
+/* --- 4. BUTTONS (Global) --- */
+.btn {
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-right: 15px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    cursor: pointer;
+}
+.btn.primary {
+    background-color: #3ea174;
+    color: #FAF9F6;
+    border: 2px solid #3ea174;
+}
+.btn.primary:hover {
+    background-color: #52b88a; /* Kept this for consistency */
+}
+.btn.secondary {
+    background-color: transparent;
+    color: #d8f5e0;
+    border: 2px solid #3ea174;
+}
+.btn.secondary:hover {
+    background-color: #3ea174;
+    color: white;
+}
+/* This targets <button> tags that AREN'T primary */
+button.btn:not(.primary) {
+    font-family: Arial, sans-serif;
+    font-size: 1rem;
+    background-color: transparent;
+    color: #d8f5e0;
+    border: 2px solid #3ea174;
+}
+button.btn:not(.primary):hover {
+    background-color: #3ea174;
+    color: white;
+}
+
+/* --- 5. CITY PAGE STYLES --- */
+main.container {
+    max-width: 1100px;
+    margin: 0 auto; /* Centers the content */
+    padding: 40px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.card {
+    background-color: #1a4a3a; /* A slightly lighter green */
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+}
+.grid .card {
+    margin-bottom: 0; 
+    display: flex;
+    flex-direction: column;
+}
+.grid .card .h2 {
+    margin-bottom: 10px;
+}
+.grid .card .muted {
+    flex-grow: 1; /* Pushes the button to the bottom */
+}
+.grid .card .btn {
+    background-color: transparent;
+    color: #d8f5e0;
+    border: 2px solid #3ea174;
+    text-align: center;
+    width: 100%;
+    padding: 10px 0;
+    margin: 10px 0 0 0;
+    box-sizing: border-box;
+}
+.grid .card .btn:hover {
+    background-color: #3ea174;
+    color: beige;
+}
+.h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: beige;
+    margin: 0 0 10px 0;
+}
+.h3 { /* New style for smaller headings */
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: black;
+    margin: 0 0 10px 0;
+}
+.muted {
+    color: #d8f5e0;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-top: 0;
+}
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #d8f5e0;
+}
+input[type="text"],
+input[id="q"],
+input[id="customCity"] {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    background-color: #0f2e21; /* Match body */
+    border: 2px solid #3ea174;
+    color: white;
+    border-radius: 14px;
+    box-sizing: border-box;
+}
+input::placeholder {
+    color: #a0a0a0;
+}
+.custom-city-group {
+    display: flex;
+    gap: 10px;
+}
+.custom-city-group input {
+    flex: 1; /* Input takes up remaining space */
+}
+.custom-city-group .btn {
+    margin-right: 0;
+}
+
+/* --- 6. FOOTER --- */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: auto; /* Pushes footer to the bottom */
+    color: #a0a0a0;
+}
+
+/* --- 7. CITY PAGE IMPROVEMENTS --- */
+main.container > .card:first-child,
+main.container > .card:last-child {
+    background-color: transparent;
+    padding: 0; 
+    border-radius: 0; 
+    margin-bottom: 40px; 
+}
+.grid {
+    margin-top: 40px;
+}
+.grid .card {
+    border: 2px solid #1a4a3a; 
+    transition: all 0.3s ease; 
+}
+.grid .card:hover {
+    transform: translateY(-5px); 
+    border-color: #3ea174; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+}
+.custom-city-group .btn {
+    border-radius: 14px; 
+    padding: 12px 24px;
+}
+
+/* --- 8. DATA GUIDE STYLES --- */
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px; /* Space above buttons */
+}
+.list-columns {
+    columns: 2;
+    -webkit-columns: 2; /* Safari */
+    -moz-columns: 2; /* Firefox */
+}
+.tip-text {
+    margin-top: 20px;
+}
+main.container ol {
+    padding-left: 30px;
+}
+main.container ol li {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+main.container ul {
+    padding-left: 30px;
+}
+main.container ul li {
+    margin-bottom: 10px;
+}
+#cityName {
+    color: #52b88a; /* Brighter accent green */
+    font-weight: 700;
+}
+.kbd {
+    background-color: #0f2e21; /* Dark background */
+    border: 1px solid #3ea174;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.95em;
+}
+main.container strong {
+    color: #eafaea; /* Brighter white */
+    font-weight: 700;
+}
+
+/* --- 9. DATA GUIDE LAYOUT --- */
+main.guide-layout-container {
+    display: flex;
+    flex-grow: 1; /* Fills space between nav and footer */
+    width: 100%;
+}
+.guide-image-column {
+    flex-basis: 40%; /* Image takes 40% of the width */
+    min-height: calc(100vh - 80px - 60px); /* Fullscreen minus nav/footer */
+    background-color: #0a1f18; /* Fallback color */
+}
+.guide-image-column img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* This makes it a "long pic" */
+    object-position: center;
+}
+.guide-content-column {
+    flex-basis: 60%; /* Content takes 60% */
+    padding: 40px 50px; /* Padding for the text */
+    box-sizing: border-box;
+    overflow-y: auto; /* Lets the text scroll if it's too long */
+}
+.guide-content-column .card {
+    background: #FAF9F6;    /* Lighter beige/oatmeal */
+    padding: 24px;
+    margin-bottom: 40px;
+    border-radius: 12px;
+    color: #0f2e21;         /* Dark green text */
+}
+
+/* --- 10. BEIGE CARD TEXT STYLES --- */
+.guide-content-column .card .h2,
+.guide-content-column .card .muted,
+.guide-content-column .card li,
+.guide-content-column .card p {
+    color: #0f2e21; /* Dark green text */
+}
+.guide-content-column .card #cityName {
+    color: #3ea174; /* Brighter green accent */
+}
+.guide-content-column .card .kbd {
+    background-color: #fafafa; 
+    border: 1px solid #ccc; 
+    color: #0f2e21; 
+}
+.guide-content-column .card strong {
+    color: #0a1f18; 
+}
+
+/* --- 11. CUSTOM BUTTON STYLE (Data Guide) --- */
+.guide-content-column button.btn {
+    background-color: #0f2e21; /* Dark green background */
+    color: #FAF9F6; /* Light text */
+    border-color: #0f2e21; 
+}
+.guide-content-column button.btn:hover {
+    background-color: #3ea174; 
+    border-color: #3ea174;
+    color: white;
+}
+
+/* --- 12. UPLOAD PAGE STYLES (FIXED) --- */
+
+/* Target the main card on the upload page */
+main.container.upload-page > .card {
+    background: #FAF9F6; /* Main light beige/oatmeal */
+    color: #0f2e21; /* Dark green text */
+}
+
+/* Style all text inside the upload card to be dark */
+.upload-page .card .h2,
+.upload-page .card .h3,
+.upload-page .card .muted,
+.upload-page .card p {
+    color: #0f2e21;
+}
+
+/* Style the block of required attributes */
+.upload-page .kbd-block {
+    display: block;
+    white-space: normal;
+    line-height: 1.6;
+    background-color: #F5F5DC; /* CHANGED: Darker beige */
+    border: 1px solid #e0e0d1; /* CHANGED: Border to match */
+    color: #0f2e21;
+    padding: 12px;
+    border-radius: 8px;
+    font-family: monospace;
+    margin-bottom: 24px;
+}
+
+/* --- Custom File Input --- */
+.file-upload-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    margin: 10px 0;
+}
+.file-upload-wrapper label[for="file"] {
+    background-color: #3ea174;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+.file-upload-wrapper label[for="file"]:hover {
+    background-color: #52b88a;
+}
+.file-upload-wrapper input[type="file"] {
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0; /* Makes it invisible */
+    cursor: pointer;
+}
+.file-name-display {
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* --- Status Badges --- */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 14px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+.tag-yes {
+    background-color: #3ea174; /* Our main green */
+    color: white;
+}
+.tag-no {
+    background-color: #d9534f; /* A standard error red */
+    color: white;
+}
+
+/* --- Preview Box --- */
+.preview-box {
+    background: #F5F5DC; /* CHANGED: Darker beige */
+    border: 1px solid #e0e0d1; /* CHANGED: Border to match */
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+.preview-content {
+    white-space: pre-wrap;
+    margin: 0;
+    color: #333; /* Darker gray text for preview */
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* --- Upload Page Buttons --- */
+.upload-page .button-group {
+    margin-top: 24px;
+}
+/* "Back to Guide" button */
+.upload-page .button-group .btn:not(.primary) {
+    background-color: #0f2e21; /* Dark green */
+    color: #FAF9F6;
+    border-color: #0f2e21;
+}
+.upload-page .button-group .btn:not(.primary):hover {
+    background-color: #3ea174;
+    border-color: #3ea174;
+    color: white;
+}
+
+/* "Run Analysis" button is already styled by .btn.primary */

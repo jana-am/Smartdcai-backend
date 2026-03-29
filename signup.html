@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sign Up - SmartDCAI</title>
+  <link rel="stylesheet" href="indexstyle.css">
+  <link rel="stylesheet" href="Citiesstyle.css">
+  <style>
+    body { background-color: #0f2e21; color: white; }
+    .auth-container {
+      max-width: 400px; margin: 100px auto; padding: 40px;
+      background: #1a4a3a; border: 1px solid #3ea174; border-radius: 20px;
+      text-align: center;
+    }
+    input {
+      width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px;
+      border: 1px solid #3ea174; background: #0f2e21; color: white;
+    }
+  </style>
+</head>
+<body>
+
+  
+  
+    <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Siting</a>
+      <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="cities.html">Cities</a>
+        <a href="guide.html">Data Guide</a>
+        <a href="result.html">Result</a>
+        <a href="about.html">About</a>
+        <a href="login.html">Login</a>
+        <a class="active" href=signup.html>Signup</a>
+        
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="auth-container">
+      <h2>Create Account</h2>
+      <p class="muted">Join the AI-Driven Siting Platform</p>
+      <input type="email" id="reg-email" placeholder="Email Address">
+      <input type="password" id="reg-pass" placeholder="Password">
+      <button class="btn primary" style="width:100%;" onclick="handleSignup()">Sign Up</button>
+      <p class="muted" style="margin-top: 20px;">Already have an account? <a href="login.html" style="color: #3ea174;">Login</a></p>
+    </div>
+  </main>
+
+  <script>
+    async function handleSignup() {
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-pass').value;
+      const response = await fetch("https://dcai-backend.onrender.com/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      if(response.ok) {
+        alert("Success! Now please login.");
+        window.location.href = "login.html";
+      } else {
+        alert("Error creating account.");
+      }
+    }
+  </script>
+</body>
+</html>

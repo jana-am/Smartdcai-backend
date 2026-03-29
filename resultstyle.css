@@ -1,0 +1,123 @@
+  <style>
+    /* --- 13. RESULT PAGE STYLES (THE RIGHT ONE) --- */
+
+    /* Make the main container wider and add padding */
+    main.container.result-page {
+        max-width: 900px; 
+        padding-top: 60px; 
+        padding-bottom: 60px;
+    }
+
+    /* Style the main beige card */
+    main.container.result-page > .card {
+        background: #FAF9F6 !important; /* Light beige/oatmeal */
+        color: #0f2e21 !important; /* Dark green text */
+        padding: 40px 50px; 
+        border-radius: 16px; 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2); 
+        text-align: center; /* Center all text */
+    }
+
+    /* Make all text inside dark */
+    .result-page .card .h2,
+    .result-page .card p {
+        color: #0f2e21 !important;
+    }
+
+    /* Heading for the recommendation */
+    .result-page .card .h2 {
+        font-size: 2.2rem; 
+        margin-bottom: 40px; 
+        font-weight: 800; 
+    }
+
+    /* Container for Decision and Confidence */
+    .result-page .decision-confidence-group {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center;
+        gap: 30px; 
+        margin-bottom: 40px; 
+        flex-wrap: wrap; 
+    }
+
+    /* Style the big "YES" / "NO" decision badge */
+    .result-page span#decision {
+        font-size: 2.5rem; 
+        padding: 15px 40px; 
+        border-radius: 30px; 
+        color: white !important; /* Text is white for both */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+        min-width: 150px; 
+        text-align: center;
+    }
+    /* These .tag-yes/.tag-no colors come from your main CSS */
+
+    /* Style the "Confidence:" text */
+    .result-page .decision-confidence-group p { 
+        font-size: 1.2rem; 
+        margin: 0;
+        color: #0f2e21 !important;
+        font-weight: 600; 
+    }
+    /* Style the confidence badge (85%) */
+    .result-page span#confidence {
+        font-size: 1.5rem; /* Smaller */
+        padding: 8px 16px;
+        border-radius: 20px;
+        background-color: #F5F5DC !important; /* Darker beige */
+        color: #0f2e21 !important;
+        font-weight: 700;
+    }
+
+    /* Heading for reasons */
+    .result-page .reasons-heading {
+        margin-bottom: 15px; 
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0a1f18 !important; /* Even darker green */
+        text-align: left; /* Aligns this label to the left */
+    }
+
+    /* Container for the "reason" badges */
+    .result-page .reasons-group {
+        display: flex;
+        justify-content: flex-start; /* Align badges to the left */
+        gap: 12px; 
+        flex-wrap: wrap; 
+        margin-bottom: 40px; 
+    }
+
+    /* Style individual reason badges (like the picture) */
+    .result-page .reasons-group .badge {
+        background-color: #3ea174 !important; /* Medium green */
+        color: white !important; /* White text */
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: normal; 
+        font-size: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* --- Result Page Buttons (Your dark green theme) --- */
+    .result-page .button-group {
+        margin-top: 40px; 
+        justify-content: center; /* Center the buttons */
+        gap: 20px; /* Add space between buttons */
+    }
+    .result-page .button-group .btn {
+        background-color: #0f2e21 !important; /* Dark green */
+        color: #FAF9F6 !important; /* Light text */
+        border-color: #0f2e21 !important;
+        padding: 14px 28px; 
+        font-size: 1.05rem;
+        border-radius: 25px; 
+        margin: 0; /* Remove default margin */
+    }
+    .result-page .button-group .btn:hover {
+        background-color: #3ea174 !important;
+        border-color: #3ea174 !important;
+        color: white !important;
+        transform: translateY(-2px); 
+    }
+  </style>

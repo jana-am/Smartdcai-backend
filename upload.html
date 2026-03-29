@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Upload  Smart Datacenter Siting</title>
+  
+  <link rel="stylesheet" href="uploadstyle.css">
+  
+  <script>
+    const REQUIRED = [
+      "Temperature","Alpha","Aerosol Optical Depth","Asymmetry","Clearsky DHI",
+      "Clearsky DNI","Clearsky GHI","Cloud Fill Flag","Cloud Type","Dew Point",
+      "DHI","DNI","Fill Flag","GHI","Ozone","Relative Humidity",
+      "Solar Zenith Angle","SSA","Surface Albedo","Pressure","Precipitable Water",
+      "Wind Direction","Wind Speed"
+    ]; // must match guide
+
+    function handleFile(ev){
+      const file = ev.target.files[0];
+      const nameBox = document.getElementById('fileName');
+      const status = document.getElementById('status');
+      const preview = document.getElementById('preview');
+      preview.textContent = ''; status.textContent='';
+      if(!file){nameBox.textContent='';return;}
+      nameBox.textContent = `Selected file: ${file.name}`; // Improved text
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result || '';
+        const [firstLine,...rest] = text.split(/\r?\n/);
+        const cols = (firstLine||'').split(',').map(s=>s.trim());
+        const missing = REQUIRED.filter(c => !cols.includes(c));
+        status.innerHTML = missing.length===0
+          ? `<span class="badge tag-yes">Schema OK</span>`
+          : `<span class="badge tag-no">Missing: ${missing.join(', ')}</span>`;
+        preview.textContent = [firstLine, ...rest.slice(0,5)].join('\n');
+        localStorage.uploadOk = (missing.length===0) ? '1' : '0';
+      };
+      reader.readAsText(file);
+    }
+    function goResult(){
+      if(localStorage.uploadOk==='1'){ window.location.href='result.html'; }
+      else alert('Please fix schema issues before continuing (use the Guide’s list).');
+    }
+  </script>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">Siting</a> <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="cities.html">Cities</a>
+      <a href="guide.html">Data Guide</a>
+      <a class="active" href="upload.html">Upload</a> <a href="result.html">Result</a>
+      <a href="about.html">About</a>
+    </div>
+  </div>
+</nav>
+
+  <div class="container upload-page"> </div>
+    <div class="card">
+      <div class="h2">Upload your CSV</div>
+     
+      
+      
+      
+      <main class="guide-content-column">
+    
+    <div class="card">
+      <div class="h2">Required headers (must all be present):</span></div>
+      <ol class="muted">
+        
+      </ol>
+  
+      
+     <ul class="kbd-block list-columns">
+  <li>Temperature</li>
+  <li>Alpha</li>
+  <li>Aerosol Optical Depth</li>
+  <li>Asymmetry</li>
+  <li>Clearsky DHI</li>
+  <li>Clearsky DNI</li>
+  <li>Clearsky GHI</li>
+  <li>Cloud Fill Flag</li>
+  <li>Cloud Type</li>
+  <li>Dew Point</li>
+  <li>DHI</li>
+  <li>DNI</li>
+  <li>Fill Flag</li>
+  <li>GHI</li>
+  <li>Ozone</li>
+  <li>Relative Humidity</li>
+  <li>Solar Zenith Angle</li>
+  <li>SSA</li>
+  <li>Surface Albedo</li>
+  <li>Pressure</li>
+  <li>Precipitable Water</li>
+  <li>Wind Direction</li>
+  <li>Wind Speed</li>
+</ul>
+
+      <div class="file-upload-wrapper">
+        <label for="file" class="btn">Choose CSV File</label>
+        <input id="file" type="file" accept=".csv" onchange="handleFile(event)">
+      </div>
+      
+      <p id="fileName" class="muted file-name-display"></p>
+      <p id="status"></p>
+
+      
+
+      <div class="button-group">
+        <a class="btn" href="guide.html">Back to Guide</a>
+        <button class="btn primary" onclick="goResult()">Run Analysis &rarr;</button>
+      </div>
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2025 Smart Datacenter Siting , All rights reserved.</p></div></footer>
+</body>
+</html>

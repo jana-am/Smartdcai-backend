@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Data Guide Smart Datacenter Siting</title>
+  
+  <link rel="stylesheet" href="guidestyle.css">
+  
+  <script>
+    const ATTRS = [
+      "Temperature","Alpha","Aerosol Optical Depth","Asymmetry","Clearsky DHI",
+      "Clearsky DNI","Clearsky GHI","Cloud Fill Flag","Cloud Type","Dew Point",
+      "DHI","DNI","Fill Flag","GHI","Ozone","Relative Humidity",
+      "Solar Zenith Angle","SSA","Surface Albedo","Pressure","Precipitable Water",
+      "Wind Direction","Wind Speed"
+    ]; // 23 attributes
+
+    function setCity(){
+      const c = localStorage.selectedCity || "Your City";
+      document.getElementById('cityName').textContent = c;
+      // Render list
+      const ul = document.getElementById('attrList');
+      ul.innerHTML = ATTRS.map(a=>`<li>${a}</li>`).join('');
+    }
+
+    function downloadTemplate(){
+      const header = ATTRS.join(',');
+      const blob = new Blob([header + "\n"], {type:"text/csv;charset=utf-8"});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "nrel_required_attributes_template.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    window.addEventListener('DOMContentLoaded', setCity);
+  </script>
+</head>
+<body>
+   <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Siting</a>
+      
+      <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="cities.html">Cities</a>
+        <a class="active" href="guide.html">Data Guide</a>
+        <a href="result.html">Result</a>
+        <a href="about.html">About</a>
+        <a href="login.html">Login</a>
+        
+      </div>
+    </div>
+  </nav>
+
+<main class="guide-layout-container">
+  
+  <div class="guide-image-column">
+    <img src="C:\Users\pc\Desktop\capstone WEBSITE\guidepic2.jpg" alt="Data center guide visual">
+  </div>
+  
+  <div class="guide-content-column">
+    
+    <div class="card">
+      <div class="h2">Steps to get data for <span id="cityName">Your City</span></div>
+      <ol class="muted">
+        <li>Go to the <strong>NREL NSRDB</strong> (and/or Wind Toolkit) site and sign in.</li>
+        <li>Search your location; confirm the coordinates.</li>
+        <li>Select <span class="kbd">hourly</span> resolution and your target years.</li>
+        <li><strong>Check all the attributes below</strong> before exporting.</li>
+        <li>Export as CSV (UTF-8) with header row.</li>
+        <li>NOTE: If datasets were missing attributes, u will still get output but accuracy and decision will be affected. </li>
+      </ol>
+      
+      <div class="button-group">
+        <button class="btn" onclick="downloadTemplate()">Download CSV Template</button>
+        <a class="btn primary" href="upload.html">Go to Upload</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h2">Required NREL Attributes (select all)</div>
+      <ul id="attrList" class="muted list-columns"></ul>
+      <p class="muted tip-text">Tip: After download, compare your CSV headers with the template or the list above.</p>
+    </div>
+    
+  <footer><div class="container"><p>&copy; 2025 Smart Datacenter Siting , All rights reserved.</p></div></footer>
+</body>
+</html>

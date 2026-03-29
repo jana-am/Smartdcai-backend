@@ -1,0 +1,190 @@
+/* General */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #0f2e21; /* Dark forest green */
+    color: white;
+    
+}
+
+/* --- NAVBAR --- */
+/* Styles the main nav bar */
+.nav {
+    padding: 18px 45px;
+    background: transparent;
+}
+
+/* We use flexbox to layout the inner navigation items */
+.nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* This centers the .navlinks block */
+    position: relative; /* Needed to position the brand */
+}
+
+/* This is your "Siting" logo/brand */
+.brand {
+    /* We position this absolutely to the left, pulling it out of the flow */
+    /* This allows the .navlinks to be perfectly centered */
+    position: absolute;
+    left: 45px; /* Matches your header padding */
+    
+    font-size: 20px;
+    font-weight: 700;
+    text-decoration: none;
+    color: white;
+}
+
+/* This is the container for your navigation links */
+.navlinks {
+    /* Since the brand is positioned absolutely, this block is now centered */
+}
+
+/* Styles for each link */
+.navlinks a {
+    margin: 0 15px; /* Changed from margin-left for better centering */
+    text-decoration: none;
+    color: #d8f5e0;
+    font-weight: 500;
+}
+
+/* Active/hover state for links */
+.navlinks a.active,
+.navlinks a:hover {
+    background: #3ea174;
+    padding: 6px 14px;
+    border-radius: 14px;
+    color: white;
+}
+
+/* --- HERO SECTION --- */
+/* This is the main container */
+.hero-section {
+    /* We set the image as a background */
+    /* IMPORTANT: Make sure your path 'images/homepic.jpg' is correct! */
+    background-image: url('images/homepic.jpg'); 
+    
+    /* This makes the background image cover the whole section */
+    background-size: cover; 
+    
+    /* This centers the background image */
+    background-position: center center; 
+    
+    /* Makes the section take up at least 90% of the screen's height */
+    min-height: 90vh; 
+    
+    /* We use flexbox to perfectly center the text content */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    
+    /* This is needed for the dark overlay */
+    position: relative; 
+}
+
+/* This adds a dark overlay on top of the image so the text is readable */
+.hero-section::before {
+    content: ""; /* This is required for a pseudo-element */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    /* This is the black overlay with 50% opacity */
+    /* You can change 0.5 to 0.6 or 0.7 to make it darker */
+    background-color: rgba(0, 0, 0, 0.5); 
+    
+    /* Puts the overlay behind the text */
+    z-index: 1; 
+}
+
+/* --- HERO SECTION --- */
+/* The main container for the text and image */
+.hero-section {
+    display: flex; /* Keeps the text and image side-by-side */
+    align-items: center; /* Vertically centers the content */
+    justify-content: space-between; /* Pushes content to the edges, creating space */
+    
+    padding: 60px; /* Padding around the section */
+    min-height: 80vh; /* Ensures the section has a good height */
+    gap: 40px; /* Space between the text and image */
+}
+
+/* The left-side text content */
+.hero-content {
+    flex: 1; /* Allows the content to take up available space */
+    max-width: 45%; /* Limits the text width so it doesn't push the image too much */
+    text-align: left; /* Aligns text to the left */
+}
+
+.hero-content h1 {
+    font-size: 3rem; /* Still a good size for the title */
+    color: white; /* Ensure title is white */
+}
+
+.hero-content p {
+    font-size: 1.1rem;
+    color: #d8f5e0; /* Subtler white for the paragraph */
+}
+
+/* Styles for the buttons (keeping them as they were) */
+.hero-buttons {
+    margin-top: 30px;
+}
+
+.btn {
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-right: 15px;
+    transition: all 0.3s ease;
+}
+
+.btn.primary {
+    background-color: #3ea174;
+    color: white;
+}
+
+.btn.primary:hover {
+    background-color: #52b88a;
+}
+
+.btn.secondary {
+    background-color: transparent;
+    color: #d8f5e0;
+    border: 2px solid #3ea174;
+}
+
+.btn.secondary:hover {
+    background-color: #3ea174;
+    color: white;
+}
+
+/* The right-side image container */
+.hero-image {
+    flex: 1.5; /* This is the key change! Gives the image more flexible space */
+              /* It will take 1.5 times the space of the hero-content (which is 1) */
+    max-width: 55%; /* Allows the image to take up to 55% of the total width */
+    text-align: right; /* Aligns the image to the right within its container */
+}
+
+.hero-image img {
+    width: 100%; /* Makes the image fill its container */
+    height: auto;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 0 18px rgba(0,0,0,0.4);
+    display: block; /* Removes extra space below the image */
+}
+
+/* --- FOOTER --- */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 5px;
+    color: #a0a0a0;
+}
