@@ -16,7 +16,7 @@ CITIES_PATH = BASE_DIR / "cities.csv"
 
 # Load model once at startup
 XGB_MODEL = xgb.XGBRegressor()
-XGB_MODEL.load_model(BASE_DIR / "unified_ghi_model.json")
+XGB_MODEL.load_model(BASE_DIR / "solar_ghi_predictor.json")
 # Load feature list
 with open(FEATURES_PATH, "r") as f:
     FEATURES = json.load(f)
