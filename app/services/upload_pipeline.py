@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 FEATURES_PATH = BASE_DIR / "features.json"
 
 XGB_MODEL = xgb.XGBRegressor()
-XGB_MODEL.load_model(str(BASE_DIR / "xgb_model_new.json"))
+XGB_MODEL.load_model(str(BASE_DIR / "unified_ghi_model.json"))
 
 with open(FEATURES_PATH, "r") as f:
     UNIVERSAL_FEATURES = json.load(f)
