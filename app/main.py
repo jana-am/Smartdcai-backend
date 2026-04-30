@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from typing import List
 from app.services.predictors import predict_city, get_supported_cities
@@ -29,7 +29,7 @@ def startup():
 
 # JSON body model — matches what the frontend sends
 class AuthRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 @app.post("/auth/signup")
