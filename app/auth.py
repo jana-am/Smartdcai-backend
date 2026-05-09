@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db, User
 import os
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "your-secret-key")
+SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
